@@ -10,6 +10,10 @@ install the package `WeihanLi.DataProtection`
 
 ## ParamsProtection
 
+`ParamsProtection` is designed to protect the response specific param info for asp.net core web api projects.
+
+Look at the sample for more details.
+
 ``` csharp
 services.AddDataProtection()
             .AddParamsProtection(options =>
