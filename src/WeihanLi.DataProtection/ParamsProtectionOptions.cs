@@ -7,7 +7,7 @@ namespace WeihanLi.DataProtection
         public string ProtectorPurpose { get; set; } = "ParamsProtector";
 
         /// <summary>
-        /// ExpiresIn
+        /// ExpiresIn, minutes
         /// </summary>
         public int? ExpiresIn { get; set; }
 
