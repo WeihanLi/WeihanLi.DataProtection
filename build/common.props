@@ -1,0 +1,23 @@
+<Project>  
+  <Import Project="sign.props" />
+  <Import Project="version.props" />
+  <PropertyGroup>        
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Title>WeihanLi.DataProtection</Title>
+    <PackageId>WeihanLi.DataProtection</PackageId>
+    <Authors>WeihanLi</Authors>
+    <Company>WeihanLi</Company>
+    <Product>WeihanLi.DataProtection</Product>
+    <PackageIconUrl>https://avatars3.githubusercontent.com/u/7604648</PackageIconUrl>
+    <PackageLicenseUrl>https://github.com/WeihanLi/WeihanLi.DataProtection/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/WeihanLi/WeihanLi.DataProtection</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/WeihanLi/WeihanLi.DataProtection</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>data protection protect protector</PackageTags>
+    <Description>DataProtection Extensions</Description>
+    <PackageReleaseNotes>
+    </PackageReleaseNotes>
+    <Copyright>Copyright 2018 WeihanLi</Copyright>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+  </PropertyGroup>
+</Project>
