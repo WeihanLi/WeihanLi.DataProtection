@@ -20,9 +20,9 @@ using Newtonsoft.Json.Linq;
 
 namespace WeihanLi.DataProtection
 {
-    public class ParamsProtectorInputFormatter : TextInputFormatter
+    public class ParamsProtectorJsonInputFormatter : TextInputFormatter
     {
-        public ParamsProtectorInputFormatter()
+        public ParamsProtectorJsonInputFormatter()
         {
             SupportedEncodings.Add(UTF8EncodingWithoutBOM);
             SupportedEncodings.Add(UTF16EncodingLittleEndian);
@@ -31,36 +31,41 @@ namespace WeihanLi.DataProtection
             SupportedMediaTypes.Add("application/*+json");
         }
 
-        public override async Task<InputFormatterResult> ReadRequestBodyAsync(InputFormatterContext context, Encoding encoding)
+        public override async Task<InputFormatterResult> ReadRequestBodyAsync(InputFormatterContext context,
+            Encoding encoding)
         {
-            var option = context.HttpContext.RequestServices.GetRequiredService<IOptions<ParamsProtectionOptions>>().Value;
-
-            var protector = context.HttpContext.RequestServices.GetDataProtector(option.ProtectorPurpose ?? ProtectorHelper.DefaultPurpose)
-                .ToTimeLimitedDataProtector();
-
             var request = context.HttpContext.Request;
+            var serviceProvider = context.HttpContext.RequestServices;
+            var option = serviceProvider.GetRequiredService<IOptions<ParamsProtectionOptions>>().Value;
+            var serializerSettings = serviceProvider.GetService<JsonSerializerSettings>();
             using (var reader = new StreamReader(request.Body, encoding ?? Encoding.UTF8))
             {
                 var content = await reader.ReadToEndAsync();
-                var obj = JsonConvert.DeserializeObject<JObject>(content);
-
-                try
+                if (option.Enabled && option.ProtectParams.Length > 0)
                 {
-                    ProtectorHelper.UnprotectParams(obj, protector, option);
+                    var protector =
+                        context.HttpContext.RequestServices.GetDataProtector(
+                            option.ProtectorPurpose ?? ProtectorHelper.DefaultPurpose);
+                    if (option.ExpiresIn.GetValueOrDefault(0) > 0)
+                    {
+                        protector = protector.ToTimeLimitedDataProtector();
+                    }
+                    var obj = JsonConvert.DeserializeObject<JToken>(content, serializerSettings);
+                    try
+                    {
+                        ProtectorHelper.UnprotectParams(obj, protector, option);
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.WriteLine(e);
+
+                        context.HttpContext.Response.StatusCode = option.InvalidRequestStatusCode;
+                        context.HttpContext.RequestAborted = new CancellationToken(true);
+                    }
+
+                    content = JsonConvert.SerializeObject(obj);
                 }
-                catch (Exception e)
-                {
-                    Debug.WriteLine(e);
-
-                    context.HttpContext.Response.StatusCode = option.InvalidRequestStatusCode;
-                    context.HttpContext.RequestAborted = new CancellationToken(true);
-                }
-
-                content = JsonConvert.SerializeObject(obj);
-
-                var requestModel = JsonConvert.DeserializeObject(content, context.ModelType);
-
-                return await InputFormatterResult.SuccessAsync(requestModel);
+                return await InputFormatterResult.SuccessAsync(JsonConvert.DeserializeObject(content, context.ModelType));
             }
         }
     }
@@ -85,50 +90,50 @@ namespace WeihanLi.DataProtection
 
         public void OnResourceExecuting(ResourceExecutingContext context)
         {
-            var queryDic = context.HttpContext.Request.Query.ToDictionary(query => query.Key, query => query.Value);
-
-            foreach (var param in _option.ProtectParams)
+            if (_option.Enabled && _option.ProtectParams.Length > 0)
             {
-                if (context.RouteData.Values.ContainsKey(param))
+                var queryDic = context.HttpContext.Request.Query.ToDictionary(query => query.Key, query => query.Value);
+
+                foreach (var param in _option.ProtectParams)
                 {
-                    try
+                    if (context.RouteData.Values.ContainsKey(param))
                     {
-                        context.RouteData.Values[param] = _protector.Unprotect(context.RouteData.Values[param].ToString());
-                    }
-                    catch (Exception e)
-                    {
-                        _logger.LogWarning(e, $"Error in unprotect routeValue:{param}");
-
-                        context.Result = new BadRequestResult();
-
-                        return;
-                    }
-                }
-
-                if (queryDic.ContainsKey(param))
-                {
-                    var vals = new List<string>();
-                    for (int i = 0; i < queryDic[param].Count; i++)
-                    {
-                        try
+                        if (_protector.TryGetUnprotectedValue(_option, context.RouteData.Values[param].ToString(), out var val))
                         {
-                            vals.Add(_protector.Unprotect(queryDic[param][i]));
+                            context.RouteData.Values[param] = val;
                         }
-                        catch (Exception e)
+                        else
                         {
-                            _logger.LogWarning(e, $"Error in unprotect query value:{param}");
+                            _logger.LogWarning($"Error in unprotect routeValue:{param}");
 
-                            context.Result = new BadRequestResult();
+                            context.Result = new StatusCodeResult(_option.InvalidRequestStatusCode);
 
                             return;
                         }
                     }
-                    queryDic[param] = new StringValues(vals.ToArray());
-                }
-            }
+                    if (queryDic.ContainsKey(param))
+                    {
+                        var vals = new List<string>();
+                        for (var i = 0; i < queryDic[param].Count; i++)
+                        {
+                            if (_protector.TryGetUnprotectedValue(_option, queryDic[param][i], out var val))
+                            {
+                                vals.Add(val);
+                            }
+                            else
+                            {
+                                _logger.LogWarning($"Error in unprotect query value: param:{param}");
+                                context.Result = new StatusCodeResult(_option.InvalidRequestStatusCode);
 
-            context.HttpContext.Request.Query = new QueryCollection(queryDic);
-            //
+                                return;
+                            }
+                        }
+                        queryDic[param] = new StringValues(vals.ToArray());
+                    }
+                }
+
+                context.HttpContext.Request.Query = new QueryCollection(queryDic);
+            }
         }
 
         public void OnResourceExecuted(ResourceExecutedContext context)
@@ -155,11 +160,9 @@ namespace WeihanLi.DataProtection
 
         public void OnResultExecuting(ResultExecutingContext context)
         {
-            if (context.Result is OkObjectResult result)
+            if (_option.Enabled && _option.ProtectParams.Length > 0 && context.Result is OkObjectResult result && result.Value != null)
             {
-                var strObj = JsonConvert.SerializeObject(result.Value);
-                //
-                var obj = JsonConvert.DeserializeObject<JToken>(strObj);
+                var obj = JsonConvert.DeserializeObject<JToken>(JsonConvert.SerializeObject(result.Value));
                 ProtectorHelper.ProtectParams(obj, _protector, _option);
                 result.Value = obj;
             }
@@ -174,7 +177,7 @@ namespace WeihanLi.DataProtection
     {
         public const string DefaultPurpose = "ParamsProtector";
 
-        public static void ProtectParams(JToken token, ITimeLimitedDataProtector protector, ParamsProtectionOptions option)
+        private static void ProtectParams(JToken token, ITimeLimitedDataProtector protector, ParamsProtectionOptions option)
         {
             if (token is JArray array)
             {
@@ -183,7 +186,7 @@ namespace WeihanLi.DataProtection
                     if (j is JValue val)
                     {
                         var strJ = val.Value.ToString();
-                        if (long.TryParse(strJ, out _))
+                        if (option.NeedProtectFunc(strJ))
                         {
                             val.Value = protector.Protect(strJ, TimeSpan.FromMinutes(option.ExpiresIn.GetValueOrDefault(10)));
                         }
@@ -200,7 +203,7 @@ namespace WeihanLi.DataProtection
                 foreach (var property in obj.Children<JProperty>())
                 {
                     var val = property.Value.ToString();
-                    if (option.ProtectParams.Any(p => p.Equals(property.Name, StringComparison.OrdinalIgnoreCase)) && long.TryParse(val, out _))
+                    if (option.ProtectParams.Any(p => p.Equals(property.Name, StringComparison.OrdinalIgnoreCase)) && option.NeedProtectFunc(val))
                     {
                         property.Value = protector.Protect(val, TimeSpan.FromMinutes(option.ExpiresIn.GetValueOrDefault(10)));
                     }
@@ -215,47 +218,75 @@ namespace WeihanLi.DataProtection
             }
         }
 
-        public static void ProtectParams(JToken token, IDataProtector protector, ParamsProtectionOptions option)
+        public static bool TryGetUnprotectedValue(this IDataProtector protector, ParamsProtectionOptions option,
+            string value, out string unprotectedValue)
         {
-            if (protector is ITimeLimitedDataProtector timeLimitedDataProtector)
+            if (option.AllowUnprotectedParams && option.NeedProtectFunc(value))
             {
-                ProtectParams(token, timeLimitedDataProtector, option);
-                return;
+                unprotectedValue = value;
             }
-
-            if (token is JArray array)
+            else
             {
-                foreach (var j in array)
+                try
                 {
-                    if (j is JValue val)
-                    {
-                        var strJ = val.Value.ToString();
-                        if (option.NeedProtectFunc(strJ))
-                        {
-                            val.Value = protector.Protect(strJ);
-                        }
-                    }
-                    else
-                    {
-                        ProtectParams(j, protector, option);
-                    }
+                    unprotectedValue = protector.Unprotect(value);
+                }
+                catch (Exception e)
+                {
+                    Debug.WriteLine(e, $"Error in unprotect value:{value}");
+                    unprotectedValue = "";
+                    return false;
                 }
             }
+            return true;
+        }
 
-            if (token is JObject obj)
+        public static void ProtectParams(JToken token, IDataProtector protector, ParamsProtectionOptions option)
+        {
+            if (option.Enabled && option.ProtectParams?.Length > 0)
             {
-                foreach (var property in obj.Children<JProperty>())
+                if (protector is ITimeLimitedDataProtector timeLimitedDataProtector)
                 {
-                    var val = property.Value.ToString();
-                    if (option.ProtectParams.Any(p => p.Equals(property.Name, StringComparison.OrdinalIgnoreCase)) && option.NeedProtectFunc(val))
+                    ProtectParams(token, timeLimitedDataProtector, option);
+                    return;
+                }
+
+                if (token is JArray array)
+                {
+                    foreach (var j in array)
                     {
-                        property.Value = protector.Protect(val);
-                    }
-                    else
-                    {
-                        if (property.Value.HasValues)
+                        if (j is JValue val)
                         {
-                            ProtectParams(property.Value, protector, option);
+                            var strJ = val.Value.ToString();
+                            if (option.NeedProtectFunc(strJ))
+                            {
+                                val.Value = protector.Protect(strJ);
+                            }
+                        }
+                        else
+                        {
+                            ProtectParams(j, protector, option);
+                        }
+                    }
+                }
+
+                if (token is JObject obj)
+                {
+                    foreach (var property in obj.Children<JProperty>())
+                    {
+                        var val = property.Value.ToString();
+                        if (option.ProtectParams.Any(p =>
+                                p.Equals(property.Name, StringComparison.OrdinalIgnoreCase)) &&
+                            option.NeedProtectFunc(val))
+                        {
+                            property.Value = protector.Protect(val);
+                        }
+                        else
+                        {
+                            if (property.Value.HasValues)
+                            {
+                                ProtectParams(property.Value, protector, option);
+                            }
                         }
                     }
                 }
@@ -264,61 +295,66 @@ namespace WeihanLi.DataProtection
 
         public static void UnprotectParams(JToken token, IDataProtector protector, ParamsProtectionOptions option)
         {
-            if (token is JArray array)
+            if (option.Enabled && option.ProtectParams?.Length > 0)
             {
-                foreach (var j in array)
+                if (token is JArray array)
                 {
-                    if (j is JValue val)
+                    foreach (var j in array)
                     {
-                        var strJ = val.Value.ToString();
-                        if (!option.NeedProtectFunc(strJ))
+                        if (j is JValue val)
                         {
-                            try
+                            var strJ = val.Value.ToString();
+                            if (!option.NeedProtectFunc(strJ))
                             {
-                                val.Value = protector.Unprotect(strJ);
-                            }
-                            catch (Exception e)
-                            {
-                                Debug.WriteLine(e);
-                                throw;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        UnprotectParams(j, protector, option);
-                    }
-                }
-            }
-
-            if (token is JObject obj)
-            {
-                foreach (var property in obj.Children<JProperty>())
-                {
-                    if (property.Value is JArray)
-                    {
-                        UnprotectParams(property.Value, protector, option);
-                    }
-                    else
-                    {
-                        var val = property.Value.ToString();
-                        if (option.ProtectParams.Any(p => p.Equals(property.Name, StringComparison.OrdinalIgnoreCase)) && !option.NeedProtectFunc(val))
-                        {
-                            try
-                            {
-                                property.Value = protector.Unprotect(val);
-                            }
-                            catch (Exception e)
-                            {
-                                Debug.WriteLine(e);
-                                throw;
+                                try
+                                {
+                                    val.Value = protector.Unprotect(strJ);
+                                }
+                                catch (Exception e)
+                                {
+                                    Debug.WriteLine(e);
+                                    throw;
+                                }
                             }
                         }
                         else
                         {
-                            if (property.Value.HasValues)
+                            UnprotectParams(j, protector, option);
+                        }
+                    }
+                }
+
+                if (token is JObject obj)
+                {
+                    foreach (var property in obj.Children<JProperty>())
+                    {
+                        if (property.Value is JArray)
+                        {
+                            UnprotectParams(property.Value, protector, option);
+                        }
+                        else
+                        {
+                            var val = property.Value.ToString();
+                            if (option.ProtectParams.Any(p =>
+                                    p.Equals(property.Name, StringComparison.OrdinalIgnoreCase)) &&
+                                !option.NeedProtectFunc(val))
                             {
-                                UnprotectParams(property.Value, protector, option);
+                                try
+                                {
+                                    property.Value = protector.Unprotect(val);
+                                }
+                                catch (Exception e)
+                                {
+                                    Debug.WriteLine(e);
+                                    throw;
+                                }
+                            }
+                            else
+                            {
+                                if (property.Value.HasValues)
+                                {
+                                    UnprotectParams(property.Value, protector, option);
+                                }
                             }
                         }
                     }

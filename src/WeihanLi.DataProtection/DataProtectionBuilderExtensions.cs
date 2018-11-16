@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace WeihanLi.DataProtection
 {
-    public static class ServiceCollectionExtensions
+    public static class DataProtectionBuilderExtensions
     {
         public static IDataProtectionBuilder AddParamsProtection(this IDataProtectionBuilder builder)
         {
@@ -32,15 +32,20 @@ namespace WeihanLi.DataProtection
                 optionsAction = options => { };
             }
 
-            serviceCollection.AddOptions();
             serviceCollection.Configure(optionsAction);
 
-            serviceCollection.Configure<MvcOptions>(action =>
+            var option = new ParamsProtectionOptions();
+            optionsAction(option);
+
+            if (option.Enabled)
             {
-                action.Filters.Add<ParamsProtectorResourceFilter>();
-                action.Filters.Add<ParamsProtectorResultFilter>();
-                action.InputFormatters.Insert(0, new ParamsProtectorInputFormatter());
-            });
+                serviceCollection.Configure<MvcOptions>(action =>
+                {
+                    action.Filters.Add<ParamsProtectorResourceFilter>();
+                    action.Filters.Add<ParamsProtectorResultFilter>();
+                    action.InputFormatters.Insert(0, new ParamsProtectorJsonInputFormatter());
+                });
+            }
 
             return serviceCollection;
         }

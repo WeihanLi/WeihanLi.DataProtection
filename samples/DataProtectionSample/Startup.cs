@@ -23,6 +23,7 @@ namespace DataProtectionSample
             services.AddDataProtection()
                 .AddParamsProtection(options =>
                 {
+                    options.AllowUnprotectedParams = true;
                     options.ProtectParams = new[]
                     {
                         "id"
