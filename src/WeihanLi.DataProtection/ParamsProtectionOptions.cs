@@ -24,8 +24,9 @@ namespace WeihanLi.DataProtection
 
         /// <summary>
         /// Invalid request response http status code
+        /// refer to https://restfulapi.net/http-status-codes/
         /// </summary>
-        public int InvalidRequestStatusCode { get; set; } = 403;
+        public int InvalidRequestStatusCode { get; set; } = 412;
 
         /// <summary>
         /// the params to protect

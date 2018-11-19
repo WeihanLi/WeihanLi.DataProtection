@@ -24,6 +24,7 @@ namespace DataProtectionSample
                 .AddParamsProtection(options =>
                 {
                     options.AllowUnprotectedParams = true;
+                    options.ExpiresIn = 1;
                     options.ProtectParams = new[]
                     {
                         "id"
