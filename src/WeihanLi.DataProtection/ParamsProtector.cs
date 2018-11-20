@@ -96,19 +96,22 @@ namespace WeihanLi.DataProtection
 
                 foreach (var param in _option.ProtectParams)
                 {
-                    if (context.RouteData.Values.ContainsKey(param))
+                    if (context.RouteData?.Values != null)
                     {
-                        if (_protector.TryGetUnprotectedValue(_option, context.RouteData.Values[param].ToString(), out var val))
+                        if (context.RouteData.Values.ContainsKey(param))
                         {
-                            context.RouteData.Values[param] = val;
-                        }
-                        else
-                        {
-                            _logger.LogWarning($"Error in unprotect routeValue:{param}");
+                            if (_protector.TryGetUnprotectedValue(_option, context.RouteData.Values[param].ToString(), out var val))
+                            {
+                                context.RouteData.Values[param] = val;
+                            }
+                            else
+                            {
+                                _logger.LogWarning($"Error in unprotect routeValue:{param}");
 
-                            context.Result = new StatusCodeResult(_option.InvalidRequestStatusCode);
+                                context.Result = new StatusCodeResult(_option.InvalidRequestStatusCode);
 
-                            return;
+                                return;
+                            }
                         }
                     }
                     if (queryDic.ContainsKey(param))
