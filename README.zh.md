@@ -2,19 +2,19 @@
 
 ## Intro
 
-asp.net core data protection extensions
+asp.net core data protection 扩展
 
 ## Install
 
-install the package `WeihanLi.DataProtection`
+安装 nuget 包 `WeihanLi.DataProtection`
 
 ## ParamsProtection
 
-`ParamsProtection` is designed to protect the response specific param info for asp.net core web api projects.
+`ParamsProtection` 是为了保护 asp.net core webapi 项目的某些参数而设计的，也可以用来做一定程度上的反爬虫。
 
 ### GetStarted
 
-Look at the sample for more details.
+通过示例项目查看更多详细信息
 
 ``` csharp
 services.AddDataProtection()
@@ -27,7 +27,7 @@ services.AddDataProtection()
             });
 ```
 
-run the [sample](https://github.com/WeihanLi/WeihanLi.DataProtection/blob/master/samples/DataProtectionSample), and access `/api/values` path, you will get something like this
+跑起来示例项目，你可以直接在 sample 项目下运行 `dotnet run` 命令，在浏览器中访问 `/api/values` 路径，你会得到类似以下的响应结果
 
 ``` json
 [
@@ -42,7 +42,7 @@ run the [sample](https://github.com/WeihanLi/WeihanLi.DataProtection/blob/master
 ]
 ```
 
-while in my code it returns
+然而在代码里你什么都不需要做，还是直接返回原来的内容即可，原来的返回内容如下：
 
 ``` csharp
 return Ok(new[] {
@@ -63,7 +63,7 @@ while if you use the id returned from the result from `api/values`,it will retur
 
 ### More
 
-There are some other options for you, look at the `ParamsProtectionOptions` file for details:
+你可以设置更多参数来更适合你的使用
 
 ``` csharp
 /// <summary>
@@ -98,14 +98,14 @@ public int InvalidRequestStatusCode { get; set; } = 412;
 public string[] ProtectParams { get;set; }
 ```
 
-you can do these things by change the option value:
+你可以改变一些值来改变参数保护模式:
 
-- disable param protection by setting the `Enabled` property value to `false`
-- change the protector purpose by change the `ProtectorPurpose` property value
-- allow the origin param by setting the `AllowUnprotectedParams` to `true`
-- change the status code when the params are not allowed to access
-- change the protected params expiry(in minutes) by setting the `ExpiresIn` property value
-- set the params to be protected by setting the `ProtectParams`property value
+- 设置 `Enabled` 为 `false` 以禁用参数保护
+- 修改 `ProtectorPurpose` 的值以改变 `DataProtector` 的 purpose
+- 设置 `AllowUnprotectedParams` 为 `true` 以允许原始参数的访问
+- 设置 `InvalidRequestStatusCode` 的值来改变不合法参数访问时响应的 Status Code
+- 修改 `ExpiresIn` 的值以改变已经保护的参数的值的过期时间
+- 设置 `ProtectParams` 的值来指定要进行参数保护的参数名称
 
 ## Contact
 
