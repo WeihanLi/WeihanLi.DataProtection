@@ -5,7 +5,7 @@ namespace WeihanLi.DataProtection
     public class ParamsProtectionOptions
     {
         private string[] _protectParams = new string[0];
-        public string ProtectorPurpose { get; set; } = "ParamsProtector";
+        public string ProtectorPurpose { get; set; } = "ParamsProtection";
 
         /// <summary>
         /// ExpiresIn, minutes
