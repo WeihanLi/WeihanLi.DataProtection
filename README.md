@@ -10,7 +10,7 @@ install the package `WeihanLi.DataProtection`
 
 ## ParamsProtection
 
-`ParamsProtection` is designed to protect the response specific param info for asp.net core web api projects.
+`ParamsProtection` is designed to protect the response specific param info for asp.net core web api projects, and it can be used for anti-network-spider.
 
 ### GetStarted
 
@@ -58,8 +58,10 @@ return Ok(new[] {
             } });
 ```
 
-because I've set the "id" param should be propected, and when you access the `/api/values/{id}` path use integer id directly you will get a 4xx (412 by default) response,
+because I've set the "id" param should be propected, and when you access the `/api/values/{id}` path use integer id directly you will get a 4xx (412 by default) response if `AllowUnprotectedParams` is false,
 while if you use the id returned from the result from `api/values`,it will return the result succssfully, and you can even set expiresIn when the protected value will be expired.
+
+You can also use the protected values in your post or put request, if the protected values are expired, you will get a 4xx(412 by default) response.
 
 ### More
 

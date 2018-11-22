@@ -26,16 +26,16 @@ namespace DataProtectionSample.Controllers
 
         // GET api/values/5
         [HttpGet("{id}")]
-        public ActionResult<string> Get(int id)
+        public IActionResult Get(int id)
         {
-            return "value";
+            return Ok(new { getId = id, value = "value" });
         }
 
         // POST api/values
         [HttpPost]
         public IActionResult Post([FromBody] FooModel model)
         {
-            return Ok(new { postId = model.Id });
+            return Ok(new { postId = model.Id, value = model.Value });
         }
 
         // PUT api/values/5
@@ -47,8 +47,9 @@ namespace DataProtectionSample.Controllers
 
         // DELETE api/values/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public IActionResult Delete(int id)
         {
+            return Ok(new { delId = id });
         }
     }
 

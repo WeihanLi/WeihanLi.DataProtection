@@ -58,8 +58,11 @@ return Ok(new[] {
             } });
 ```
 
-because I've set the "id" param should be propected, and when you access the `/api/values/{id}` path use integer id directly you will get a 4xx (412 by default) response,
-while if you use the id returned from the result from `api/values`,it will return the result succssfully, and you can even set expiresIn when the protected value will be expired.
+因为在启动的时候已经设置了 `id` 参数应该被保护，所以当你访问 `/api/values/{id}` 这个地址的时候，如果没有设置 `AllowUnprotectedParams` 为 `true` 的话，直接使用原始的 `int` 类型的 id 去访问就会得到一个 4xx(默认是412) 状态码的响应，如果用从 `/api/values` 返回的 id 的值去访问就会正常的拿到响应。
+
+除此之外你可以设置被保护的值的过期时间，通过设置一个比较短的过期时间来一定程度上的反爬虫，有个不太友好的地方就是可能会一定程序上的影响用户体检，如果用户打开一个页面长期没有操作就可能会导致某些操作可能会失败，需要用户重新操作。
+
+你也可以是 `POST` 或 `PUT` 请求中使用被保护的值，如果被保护的值已经过期，你会从服务得到一个 4xx(默认 412) 的响应。
 
 ### More
 
