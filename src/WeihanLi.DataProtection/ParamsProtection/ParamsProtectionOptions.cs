@@ -1,11 +1,11 @@
 ﻿using System;
 
-namespace WeihanLi.DataProtection
+namespace WeihanLi.DataProtection.ParamsProtection
 {
     public class ParamsProtectionOptions
     {
         private string[] _protectParams = new string[0];
-        
+
         /// <summary>
         /// ProtectorPurpose
         /// </summary>
@@ -50,6 +50,6 @@ namespace WeihanLi.DataProtection
         /// <summary>
         /// the parameter whether should be protected condition
         /// </summary>
-        public Func<string, bool> NeedProtectFunc { get; set; } = str => true;
+        public Func<string, bool> NeedProtectFunc { get; set; } = str => long.TryParse(str, out _);
     }
 }

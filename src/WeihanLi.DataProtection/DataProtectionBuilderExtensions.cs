@@ -2,52 +2,54 @@
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
+using WeihanLi.DataProtection.ParamsProtection;
 
 namespace WeihanLi.DataProtection
 {
     public static class DataProtectionBuilderExtensions
     {
+        /// <summary>
+        /// AddParamsProtection
+        /// </summary>
+        /// <param name="builder">dataProtectionBuilder</param>
+        /// <returns></returns>
         public static IDataProtectionBuilder AddParamsProtection(this IDataProtectionBuilder builder)
         {
-            builder.Services.AddParamsProtection(null);
+            if (null == builder)
+            {
+                throw new ArgumentNullException(nameof(builder));
+            }
+
+            builder.Services.Configure<MvcOptions>(action =>
+                {
+                    action.Filters.Add<ParamsProtectionResourceFilter>();
+                    action.Filters.Add<ParamsProtectionResultFilter>();
+                });
 
             return builder;
         }
 
+        /// <summary>
+        /// AddParamsProtection
+        /// </summary>
+        /// <param name="builder">dataProtectionBuilder</param>
+        /// <param name="optionsAction">options config action</param>
+        /// <returns></returns>
         public static IDataProtectionBuilder AddParamsProtection(this IDataProtectionBuilder builder, Action<ParamsProtectionOptions> optionsAction)
         {
-            builder.Services.AddParamsProtection(optionsAction);
-
-            return builder;
-        }
-
-        internal static IServiceCollection AddParamsProtection(this IServiceCollection serviceCollection, Action<ParamsProtectionOptions> optionsAction)
-        {
-            if (null == serviceCollection)
+            if (null == builder)
             {
-                throw new ArgumentNullException(nameof(serviceCollection));
+                throw new ArgumentNullException(nameof(builder));
             }
             if (null == optionsAction)
             {
-                optionsAction = options => { };
+                throw new ArgumentNullException(nameof(optionsAction));
             }
 
-            serviceCollection.Configure(optionsAction);
+            builder.AddParamsProtection();
+            builder.Services.Configure(optionsAction);
 
-            var option = new ParamsProtectionOptions();
-            optionsAction(option);
-
-            if (option.Enabled)
-            {
-                serviceCollection.Configure<MvcOptions>(action =>
-                {
-                    action.Filters.Add<ParamsProtectorResourceFilter>();
-                    action.Filters.Add<ParamsProtectorResultFilter>();
-                    action.InputFormatters.Insert(0, new ParamsProtectorJsonInputFormatter());
-                });
-            }
-
-            return serviceCollection;
+            return builder;
         }
     }
 }

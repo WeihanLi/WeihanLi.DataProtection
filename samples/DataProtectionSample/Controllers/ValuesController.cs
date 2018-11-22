@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 
 namespace DataProtectionSample.Controllers
 {
@@ -32,14 +33,16 @@ namespace DataProtectionSample.Controllers
 
         // POST api/values
         [HttpPost]
-        public void Post([FromBody] string value)
+        public IActionResult Post([FromBody] FooModel model)
         {
+            return Ok(new { postId = model.Id });
         }
 
         // PUT api/values/5
         [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        public IActionResult Put(int id, [FromBody] FooModel model)
         {
+            return Ok(new { routeId = id, putId = model.Id, value = model.Value });
         }
 
         // DELETE api/values/5
@@ -47,5 +50,14 @@ namespace DataProtectionSample.Controllers
         public void Delete(int id)
         {
         }
+    }
+
+    public class FooModel
+    {
+        [JsonProperty("id")]
+        public int Id { get; set; }
+
+        [JsonProperty("value")]
+        public string Value { get; set; }
     }
 }
