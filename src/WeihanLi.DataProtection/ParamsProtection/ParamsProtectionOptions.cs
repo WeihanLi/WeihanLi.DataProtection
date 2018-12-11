@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using Microsoft.AspNetCore.Mvc;
 
 namespace WeihanLi.DataProtection.ParamsProtection
 {
@@ -51,5 +53,13 @@ namespace WeihanLi.DataProtection.ParamsProtection
         /// the parameter whether should be protected condition
         /// </summary>
         public Func<string, bool> NeedProtectFunc { get; set; } = str => long.TryParse(str, out _);
+
+        /// <summary>
+        /// whether the response should be protected
+        /// </summary>
+        public IDictionary<Type, string> NeedProtectResponseValues { get; } = new Dictionary<Type, string>()
+        {
+            { typeof(ObjectResult), "Value"}
+        };
     }
 }

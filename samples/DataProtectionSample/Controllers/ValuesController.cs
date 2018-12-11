@@ -31,6 +31,22 @@ namespace DataProtectionSample.Controllers
             return Ok(new { getId = id, value = "value" });
         }
 
+        [HttpGet("test")]
+        public IActionResult AnotherGetTest()
+        {
+            return new JsonResult(new[]{
+                new
+                {
+                    id = 1,
+                    val = "value1"
+                },
+                new
+                {
+                    id =2,
+                    val ="value2"
+                } });
+        }
+
         // POST api/values
         [HttpPost]
         public IActionResult Post([FromBody] FooModel model)

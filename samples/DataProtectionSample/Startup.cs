@@ -29,6 +29,7 @@ namespace DataProtectionSample
                     {
                         "id"
                     };
+                    options.NeedProtectResponseValues.Add(typeof(JsonResult), "Value");
                 });
         }
 
