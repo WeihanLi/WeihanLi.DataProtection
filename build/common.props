@@ -18,6 +18,6 @@
     <PackageReleaseNotes>
     </PackageReleaseNotes>
     <Copyright>Copyright 2018 WeihanLi</Copyright>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <GeneratePackageOnBuild Condition="'$(Configuration)'=='Release'">True</GeneratePackageOnBuild>
   </PropertyGroup>
 </Project>
