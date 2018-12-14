@@ -32,7 +32,7 @@ namespace DataProtectionSample.Controllers
         }
 
         [HttpGet("test")]
-        public IActionResult AnotherGetTest()
+        public IActionResult JsonResultTest()
         {
             return new JsonResult(new[]{
                 new

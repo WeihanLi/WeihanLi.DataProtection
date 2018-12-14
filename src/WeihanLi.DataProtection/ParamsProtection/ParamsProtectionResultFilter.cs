@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace WeihanLi.DataProtection.ParamsProtection
@@ -38,9 +37,10 @@ namespace WeihanLi.DataProtection.ParamsProtection
                         var val = prop?.GetValue(context.Result);
                         if (val != null)
                         {
-                            var obj = JsonConvert.DeserializeObject<JToken>(JsonConvert.SerializeObject(val));
-                            ParamsProtectionHelper.ProtectParams(obj, _protector, _option);
+                            _logger.LogInformation($"{GetType().FullName} is protecting {pair.Key.FullName} Type Value");
 
+                            var obj = JToken.FromObject(val);
+                            ParamsProtectionHelper.ProtectParams(obj, _protector, _option);
                             prop.SetValue(context.Result, obj);
                         }
                     }

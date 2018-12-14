@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using Microsoft.AspNetCore.Mvc;
+using WeihanLi.Extensions;
 
 namespace WeihanLi.DataProtection.ParamsProtection
 {
@@ -57,9 +59,14 @@ namespace WeihanLi.DataProtection.ParamsProtection
         /// <summary>
         /// whether the response should be protected
         /// </summary>
-        public IDictionary<Type, string> NeedProtectResponseValues { get; } = new Dictionary<Type, string>()
+        internal IDictionary<Type, string> NeedProtectResponseValues { get; } = new Dictionary<Type, string>()
         {
             { typeof(ObjectResult), "Value"}
         };
+
+        public void AddProtectValue<TResult>(Expression<Func<TResult, object>> valueExpression) where TResult : IActionResult
+        {
+            NeedProtectResponseValues.Add(typeof(TResult), valueExpression.GetMemberInfo().Name);
+        }
     }
 }
