@@ -64,9 +64,14 @@ namespace WeihanLi.DataProtection.ParamsProtection
             { typeof(ObjectResult), "Value"}
         };
 
+        /// <summary>
+        /// Add type and value ToProtectValues
+        /// </summary>
+        /// <typeparam name="TResult">TResult</typeparam>
+        /// <param name="valueExpression">the value of the type to protect</param>
         public void AddProtectValue<TResult>(Expression<Func<TResult, object>> valueExpression) where TResult : IActionResult
         {
-            NeedProtectResponseValues.Add(typeof(TResult), valueExpression.GetMemberInfo().Name);
+            NeedProtectResponseValues[typeof(TResult)] = valueExpression.GetMemberInfo().Name;
         }
     }
 }
