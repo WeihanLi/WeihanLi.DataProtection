@@ -52,9 +52,14 @@ namespace WeihanLi.DataProtection.ParamsProtection
         }
 
         /// <summary>
+        /// whether the NeedProtectFunc is enabled
+        /// </summary>
+        public bool ParamValueProtectFuncEnabled { get; set; }
+
+        /// <summary>
         /// the parameter whether should be protected condition
         /// </summary>
-        public Func<string, bool> NeedProtectFunc { get; set; } = str => long.TryParse(str, out _);
+        public Func<string, bool> ParamValueNeedProtectFunc { get; set; } = str => long.TryParse(str, out _);
 
         /// <summary>
         /// whether the response should be protected

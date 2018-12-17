@@ -10,16 +10,39 @@ namespace WeihanLi.DataProtection.ParamsProtection
     {
         public const string DefaultPurpose = "ParamsProtector";
 
+        private static bool IsParamNeedProtect(this ParamsProtectionOptions option, string propName, string value)
+        {
+            if (option.ProtectParams.Any(p => p.Equals(propName, StringComparison.OrdinalIgnoreCase)))
+            {
+                return (!option.ParamValueProtectFuncEnabled || option.ParamValueNeedProtectFunc(value));
+            }
+            return false;
+        }
+
+        private static bool IsParamNeedUnprotect(this ParamsProtectionOptions option, string propName, string value)
+        {
+            if (option.ProtectParams.Any(p => p.Equals(propName, StringComparison.OrdinalIgnoreCase)))
+            {
+                return !option.ParamValueProtectFuncEnabled || !option.ParamValueNeedProtectFunc(value);
+            }
+            return false;
+        }
+
+        private static bool IsParamValueNeedProtect(this ParamsProtectionOptions option, string value)
+        {
+            return !option.ParamValueProtectFuncEnabled || option.ParamValueNeedProtectFunc(value);
+        }
+
         private static void ProtectParams(JToken token, ITimeLimitedDataProtector protector, ParamsProtectionOptions option)
         {
             if (token is JArray array)
             {
                 foreach (var j in array)
                 {
-                    if (j is JValue val)
+                    if (array.Parent is JProperty property && j is JValue val)
                     {
                         var strJ = val.Value.ToString();
-                        if (option.NeedProtectFunc(strJ))
+                        if (option.IsParamNeedProtect(property.Name, strJ))
                         {
                             val.Value = protector.Protect(strJ, TimeSpan.FromMinutes(option.ExpiresIn.GetValueOrDefault(10)));
                         }
@@ -30,13 +53,12 @@ namespace WeihanLi.DataProtection.ParamsProtection
                     }
                 }
             }
-
-            if (token is JObject obj)
+            else if (token is JObject obj)
             {
                 foreach (var property in obj.Children<JProperty>())
                 {
                     var val = property.Value.ToString();
-                    if (option.ProtectParams.Any(p => p.Equals(property.Name, StringComparison.OrdinalIgnoreCase)) && option.NeedProtectFunc(val))
+                    if (option.IsParamNeedProtect(property.Name, val))
                     {
                         property.Value = protector.Protect(val, TimeSpan.FromMinutes(option.ExpiresIn.GetValueOrDefault(10)));
                     }
@@ -54,7 +76,9 @@ namespace WeihanLi.DataProtection.ParamsProtection
         public static bool TryGetUnprotectedValue(this IDataProtector protector, ParamsProtectionOptions option,
             string value, out string unprotectedValue)
         {
-            if (option.AllowUnprotectedParams && option.NeedProtectFunc(value))
+            if (option.AllowUnprotectedParams &&
+                (option.ParamValueProtectFuncEnabled && option.ParamValueNeedProtectFunc(value))
+                )
             {
                 unprotectedValue = value;
             }
@@ -67,7 +91,7 @@ namespace WeihanLi.DataProtection.ParamsProtection
                 catch (Exception e)
                 {
                     Debug.WriteLine(e, $"Error in unprotect value:{value}");
-                    unprotectedValue = "";
+                    unprotectedValue = value;
                     return false;
                 }
             }
@@ -83,15 +107,14 @@ namespace WeihanLi.DataProtection.ParamsProtection
                     ProtectParams(token, timeLimitedDataProtector, option);
                     return;
                 }
-
                 if (token is JArray array)
                 {
                     foreach (var j in array)
                     {
-                        if (j is JValue val)
+                        if (array.Parent is JProperty property && j is JValue val)
                         {
                             var strJ = val.Value.ToString();
-                            if (option.NeedProtectFunc(strJ))
+                            if (option.IsParamNeedProtect(property.Name, strJ))
                             {
                                 val.Value = protector.Protect(strJ);
                             }
@@ -102,15 +125,12 @@ namespace WeihanLi.DataProtection.ParamsProtection
                         }
                     }
                 }
-
-                if (token is JObject obj)
+                else if (token is JObject obj)
                 {
                     foreach (var property in obj.Children<JProperty>())
                     {
                         var val = property.Value.ToString();
-                        if (option.ProtectParams.Any(p =>
-                                p.Equals(property.Name, StringComparison.OrdinalIgnoreCase)) &&
-                            option.NeedProtectFunc(val))
+                        if (option.IsParamNeedProtect(property.Name, val))
                         {
                             property.Value = protector.Protect(val);
                         }
@@ -136,21 +156,17 @@ namespace WeihanLi.DataProtection.ParamsProtection
                     {
                         if (j is JValue val)
                         {
-                            if (array.Parent.Root is JProperty property && option.ProtectParams.Any(p =>
-                                    p.Equals(property.Name, StringComparison.OrdinalIgnoreCase)))
+                            var strJ = val.Value.ToString();
+                            if (array.Parent is JProperty property && option.IsParamNeedUnprotect(property.Name, strJ))
                             {
-                                var strJ = val.Value.ToString();
-                                if (!option.NeedProtectFunc(strJ))
+                                try
                                 {
-                                    try
-                                    {
-                                        val.Value = protector.Unprotect(strJ);
-                                    }
-                                    catch (Exception e)
-                                    {
-                                        Debug.WriteLine(e);
-                                        throw;
-                                    }
+                                    val.Value = protector.Unprotect(strJ);
+                                }
+                                catch (Exception e)
+                                {
+                                    Debug.WriteLine(e);
+                                    throw;
                                 }
                             }
                         }
@@ -160,8 +176,7 @@ namespace WeihanLi.DataProtection.ParamsProtection
                         }
                     }
                 }
-
-                if (token is JObject obj)
+                else if (token is JObject obj)
                 {
                     foreach (var property in obj.Children<JProperty>())
                     {
@@ -172,9 +187,7 @@ namespace WeihanLi.DataProtection.ParamsProtection
                         else
                         {
                             var val = property.Value.ToString();
-                            if (option.ProtectParams.Any(p =>
-                                    p.Equals(property.Name, StringComparison.OrdinalIgnoreCase)) &&
-                                !option.NeedProtectFunc(val))
+                            if (option.IsParamNeedUnprotect(property.Name, val))
                             {
                                 try
                                 {

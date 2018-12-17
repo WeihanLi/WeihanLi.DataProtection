@@ -31,7 +31,19 @@ namespace DataProtectionSample.Controllers
             return Ok(new { getId = id, value = "value" });
         }
 
-        [HttpGet("test")]
+        [HttpGet("jsonArrayTest")]
+        public IActionResult JsonArrayResultTest()
+        {
+            return new JsonResult(new[] { 1, 2, 3 });
+        }
+
+        [HttpGet("jsonArrayTest2")]
+        public IActionResult JsonArrayResultTest2()
+        {
+            return new JsonResult(new { Id = new[] { 1, 2, 3 } });
+        }
+
+        [HttpGet("jsonTest")]
         public IActionResult JsonResultTest()
         {
             return new JsonResult(new[]{
@@ -42,8 +54,8 @@ namespace DataProtectionSample.Controllers
                 },
                 new
                 {
-                    id =2,
-                    val ="value2"
+                    id = 2,
+                    val = "value2"
                 } });
         }
 
@@ -74,7 +86,7 @@ namespace DataProtectionSample.Controllers
         [JsonProperty("id")]
         public int Id { get; set; }
 
-        [JsonProperty("value")]
+        [JsonProperty("val")]
         public string Value { get; set; }
     }
 }

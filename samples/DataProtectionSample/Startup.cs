@@ -25,10 +25,16 @@ namespace DataProtectionSample
                 {
                     options.AllowUnprotectedParams = true;
                     options.ExpiresIn = 10;
+
+                    options.ParamValueProtectFuncEnabled = true;
+                    options.ParamValueNeedProtectFunc = str => long.TryParse(str, out _);
+
                     options.ProtectParams = new[]
                     {
-                        "id"
+                        "id",
+                        "val",
                     };
+
                     options.AddProtectValue<JsonResult>(r => r.Value);
                 });
         }
