@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Security.Cryptography;
 using Microsoft.AspNetCore.DataProtection;
 using Newtonsoft.Json.Linq;
 
@@ -166,7 +167,14 @@ namespace WeihanLi.DataProtection.ParamsProtection
                                 catch (Exception e)
                                 {
                                     Debug.WriteLine(e);
-                                    throw;
+                                    if (option.AllowUnprotectedParams && e is CryptographicException && e.Message.Equals("The provided payload cannot be decrypted because it was not protected with this protection provider."))
+                                    {
+                                        val.Value = strJ;
+                                    }
+                                    else
+                                    {
+                                        throw;
+                                    }
                                 }
                             }
                         }
@@ -196,7 +204,14 @@ namespace WeihanLi.DataProtection.ParamsProtection
                                 catch (Exception e)
                                 {
                                     Debug.WriteLine(e);
-                                    throw;
+                                    if (option.AllowUnprotectedParams && e is CryptographicException && e.Message.Equals("The provided payload cannot be decrypted because it was not protected with this protection provider."))
+                                    {
+                                        property.Value = val;
+                                    }
+                                    else
+                                    {
+                                        throw;
+                                    }
                                 }
                             }
                             else

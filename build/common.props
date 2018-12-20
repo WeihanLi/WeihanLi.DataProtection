@@ -9,7 +9,7 @@
     <Company>WeihanLi</Company>
     <Product>WeihanLi.DataProtection</Product>
     <PackageIconUrl>https://avatars3.githubusercontent.com/u/7604648</PackageIconUrl>
-    <PackageLicenseUrl>https://github.com/WeihanLi/WeihanLi.DataProtection/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/WeihanLi/WeihanLi.DataProtection</PackageProjectUrl>
     <RepositoryUrl>https://github.com/WeihanLi/WeihanLi.DataProtection</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
