@@ -93,6 +93,10 @@ namespace WeihanLi.DataProtection.ParamsProtection
                 {
                     Debug.WriteLine(e, $"Error in unprotect value:{value}");
                     unprotectedValue = value;
+                    if (option.AllowUnprotectedParams && e is CryptographicException && e.Message.Equals("The provided payload cannot be decrypted because it was not protected with this protection provider."))
+                    {
+                        return true;
+                    }                    
                     return false;
                 }
             }
