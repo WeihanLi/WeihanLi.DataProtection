@@ -93,7 +93,7 @@ namespace WeihanLi.DataProtection.ParamsProtection
                 {
                     Debug.WriteLine(e, $"Error in unprotect value:{value}");
                     unprotectedValue = value;
-                    if (option.AllowUnprotectedParams && e is CryptographicException && e.Message.Equals("The provided payload cannot be decrypted because it was not protected with this protection provider."))
+                    if (option.AllowUnprotectedParams && e is CryptographicException && !e.Message.Contains("expired"))
                     {
                         return true;
                     }                    
@@ -171,7 +171,7 @@ namespace WeihanLi.DataProtection.ParamsProtection
                                 catch (Exception e)
                                 {
                                     Debug.WriteLine(e);
-                                    if (option.AllowUnprotectedParams && e is CryptographicException && e.Message.Equals("The provided payload cannot be decrypted because it was not protected with this protection provider."))
+                                    if (option.AllowUnprotectedParams && e is CryptographicException && !e.Message.Contains("expired"))
                                     {
                                         val.Value = strJ;
                                     }
@@ -208,7 +208,7 @@ namespace WeihanLi.DataProtection.ParamsProtection
                                 catch (Exception e)
                                 {
                                     Debug.WriteLine(e);
-                                    if (option.AllowUnprotectedParams && e is CryptographicException && e.Message.Equals("The provided payload cannot be decrypted because it was not protected with this protection provider."))
+                                    if (option.AllowUnprotectedParams && e is CryptographicException && !e.Message.Contains("expired"))
                                     {
                                         property.Value = val;
                                     }
