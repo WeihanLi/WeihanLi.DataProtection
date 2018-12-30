@@ -1,8 +1,11 @@
-﻿using Microsoft.AspNetCore.DataProtection;
+﻿using System.Linq;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
+using WeihanLi.Common;
+using WeihanLi.Extensions;
 
 namespace WeihanLi.DataProtection.ParamsProtection
 {
@@ -33,15 +36,15 @@ namespace WeihanLi.DataProtection.ParamsProtection
                 {
                     if (pair.Key.IsInstanceOfType(context.Result))
                     {
-                        var prop = pair.Key.GetProperty(pair.Value);
-                        var val = prop?.GetValue(context.Result);
+                        var prop = CacheUtil.TypePropertyCache.GetOrAdd(pair.Key, t => t.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)).FirstOrDefault(p => p.Name == pair.Value);
+                        var val = prop?.GetValueGetter().Invoke(context.Result);
                         if (val != null)
                         {
-                            _logger.LogInformation($"{GetType().FullName} is protecting {pair.Key.FullName} Type Value");
+                            _logger.LogDebug($"ParamsProtector is protecting {GetType().FullName}.{pair.Key.FullName} Value");
 
                             var obj = JToken.FromObject(val);
                             ParamsProtectionHelper.ProtectParams(obj, _protector, _option);
-                            prop.SetValue(context.Result, obj);
+                            prop.GetValueSetter().Invoke(context.Result, obj);
                         }
                     }
                 }
