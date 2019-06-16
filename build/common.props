@@ -1,5 +1,4 @@
-<Project>  
-  <Import Project="sign.props" />
+<Project>
   <PropertyGroup>        
     <TargetFramework>netstandard2.0</TargetFramework>
     <Title>WeihanLi.DataProtection</Title>
