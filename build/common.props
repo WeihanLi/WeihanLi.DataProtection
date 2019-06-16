@@ -1,6 +1,5 @@
 <Project>  
   <Import Project="sign.props" />
-  <Import Project="version.props" />
   <PropertyGroup>        
     <TargetFramework>netstandard2.0</TargetFramework>
     <Title>WeihanLi.DataProtection</Title>
@@ -17,7 +16,7 @@
     <Description>DataProtection Extensions</Description>
     <PackageReleaseNotes>
     </PackageReleaseNotes>
-    <Copyright>Copyright 2018 WeihanLi</Copyright>
+    <Copyright>Copyright 2018-2019 WeihanLi</Copyright>
     <GeneratePackageOnBuild Condition="'$(Configuration)'=='Release'">True</GeneratePackageOnBuild>
   </PropertyGroup>
 </Project>
