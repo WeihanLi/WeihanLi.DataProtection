@@ -13,6 +13,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using WeihanLi.Common.Helpers;
 using WeihanLi.Extensions;
 
 namespace WeihanLi.DataProtection.ParamsProtection
@@ -99,7 +100,7 @@ namespace WeihanLi.DataProtection.ParamsProtection
                         using (var reader = new StreamReader(request.Body, Encoding.UTF8))
                         {
                             var content = reader.ReadToEnd();
-                            var obj = JsonConvert.DeserializeObject<JToken>(content);
+                            var obj = content.JsonToType<JToken>();
                             try
                             {
                                 ParamsProtectionHelper.UnprotectParams(obj, _protector, _option);
@@ -113,8 +114,26 @@ namespace WeihanLi.DataProtection.ParamsProtection
                                 return;
                             }
 
-                            context.HttpContext.Request.Body = JsonConvert.SerializeObject(obj).GetBytes().ToMemoryStream();
+                            context.HttpContext.Request.Body = obj.ToJson().GetBytes().ToMemoryStream();
                         }
+                    }
+                    else if(request.ContentType.Contains("xml"))
+                    {
+                        // TODO: need test
+                        var obj = XmlDataSerializer.Instance.Value.Deserialize<JToken>(request.Body.ToByteArray());
+                        try
+                        {
+                            ParamsProtectionHelper.UnprotectParams(obj, _protector, _option);
+                        }
+                        catch (Exception e)
+                        {
+                            _logger.LogWarning(e, "Error in unprotect request body");
+
+                            context.Result = new StatusCodeResult(_option.InvalidRequestStatusCode);
+
+                            return;
+                        }
+                        context.HttpContext.Request.Body = XmlDataSerializer.Instance.Value.Serialize(obj).ToMemoryStream();
                     }
 
                     if (request.HasFormContentType && request.Form != null && request.Form.Count > 0)
