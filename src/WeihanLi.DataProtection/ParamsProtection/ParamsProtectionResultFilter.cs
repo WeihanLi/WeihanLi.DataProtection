@@ -36,7 +36,8 @@ namespace WeihanLi.DataProtection.ParamsProtection
                 {
                     if (pair.Key.IsInstanceOfType(context.Result))
                     {
-                        var prop = CacheUtil.TypePropertyCache.GetOrAdd(pair.Key, t => t.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)).FirstOrDefault(p => p.Name == pair.Value);
+                        var prop = CacheUtil.TypePropertyCache.GetOrAdd(pair.Key, t => t.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+                            .FirstOrDefault(p => p.Name == pair.Value);
                         var val = prop?.GetValueGetter()?.Invoke(context.Result);
                         if (val != null)
                         {

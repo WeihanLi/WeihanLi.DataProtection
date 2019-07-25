@@ -11,7 +11,6 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WeihanLi.Common.Helpers;
 using WeihanLi.Extensions;
@@ -43,6 +42,7 @@ namespace WeihanLi.DataProtection.ParamsProtection
             {
                 var request = context.HttpContext.Request;
 
+                // QueryString
                 if (request.Query != null && request.Query.Count > 0)
                 {
                     var queryDic = request.Query.ToDictionary(query => query.Key, query => query.Value);
@@ -70,7 +70,7 @@ namespace WeihanLi.DataProtection.ParamsProtection
                         context.HttpContext.Request.Query = new QueryCollection(queryDic);
                     }
                 }
-
+                // route value
                 if (context.RouteData?.Values != null)
                 {
                     foreach (var param in _option.ProtectParams)
@@ -116,8 +116,8 @@ namespace WeihanLi.DataProtection.ParamsProtection
 
                             context.HttpContext.Request.Body = obj.ToJson().GetBytes().ToMemoryStream();
                         }
-                    }
-                    else if(request.ContentType.Contains("xml"))
+                    } // json body
+                    else if (request.ContentType.Contains("xml"))
                     {
                         // TODO: need test
                         var obj = XmlDataSerializer.Instance.Value.Deserialize<JToken>(request.Body.ToByteArray());
@@ -134,8 +134,9 @@ namespace WeihanLi.DataProtection.ParamsProtection
                             return;
                         }
                         context.HttpContext.Request.Body = XmlDataSerializer.Instance.Value.Serialize(obj).ToMemoryStream();
-                    }
+                    } // xml body
 
+                    // form data
                     if (request.HasFormContentType && request.Form != null && request.Form.Count > 0)
                     {
                         var formDic = request.Form.ToDictionary(_ => _.Key, _ => _.Value);
