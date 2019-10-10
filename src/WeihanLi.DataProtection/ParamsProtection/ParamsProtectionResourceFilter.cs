@@ -5,7 +5,13 @@ using System.Linq;
 using System.Text;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
+
+#if NETSTANDARD2_0
+
 using Microsoft.AspNetCore.Http.Internal;
+
+#endif
+
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Logging;
