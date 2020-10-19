@@ -25,6 +25,7 @@ namespace WeihanLi.DataProtection.ParamsProtection
 {
     public class ParamsProtectionResourceFilter : IResourceFilter
     {
+        private static readonly Lazy<XmlDataSerializer> XmlDataSerializer = new Lazy<XmlDataSerializer>(()=> new XmlDataSerializer());
         private readonly IDataProtector _protector;
         private readonly ParamsProtectionOptions _option;
 
@@ -106,7 +107,7 @@ namespace WeihanLi.DataProtection.ParamsProtection
                         using (var reader = new StreamReader(request.Body, Encoding.UTF8))
                         {
                             var content = reader.ReadToEnd();
-                            var obj = content.JsonToType<JToken>();
+                            var obj = content.JsonToObject<JToken>();
                             try
                             {
                                 ParamsProtectionHelper.UnprotectParams(obj, _protector, _option);
@@ -126,7 +127,7 @@ namespace WeihanLi.DataProtection.ParamsProtection
                     else if (request.ContentType.Contains("xml"))
                     {
                         // TODO: need test
-                        var obj = XmlDataSerializer.Instance.Value.Deserialize<JToken>(request.Body.ToByteArray());
+                        var obj = XmlDataSerializer.Value.Deserialize<JToken>(request.Body.ToByteArray());
                         try
                         {
                             ParamsProtectionHelper.UnprotectParams(obj, _protector, _option);
@@ -139,7 +140,7 @@ namespace WeihanLi.DataProtection.ParamsProtection
 
                             return;
                         }
-                        context.HttpContext.Request.Body = XmlDataSerializer.Instance.Value.Serialize(obj).ToMemoryStream();
+                        context.HttpContext.Request.Body = XmlDataSerializer.Value.Serialize(obj).ToMemoryStream();
                     } // xml body
 
                     // form data

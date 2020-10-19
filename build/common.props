@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>        
-    <TargetFrameworks>netstandard2.0;netcoreapp3.0;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net5.0;netcoreapp3.1</TargetFrameworks>
     <Title>WeihanLi.DataProtection</Title>
     <PackageId>WeihanLi.DataProtection</PackageId>
     <Authors>WeihanLi</Authors>
@@ -15,7 +15,7 @@
     <Description>DataProtection Extensions</Description>
     <PackageReleaseNotes>
     </PackageReleaseNotes>
-    <Copyright>Copyright 2018-2019 WeihanLi</Copyright>
+    <Copyright>Copyright 2018-2020 WeihanLi</Copyright>
     <GeneratePackageOnBuild Condition="'$(Configuration)'=='Release'">True</GeneratePackageOnBuild>
   </PropertyGroup>
 </Project>
