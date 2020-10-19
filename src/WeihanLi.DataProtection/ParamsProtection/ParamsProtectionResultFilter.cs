@@ -36,12 +36,11 @@ namespace WeihanLi.DataProtection.ParamsProtection
                 {
                     if (pair.Key.IsInstanceOfType(context.Result))
                     {
-                        var prop = CacheUtil.TypePropertyCache.GetOrAdd(pair.Key, t => t.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
-                            .FirstOrDefault(p => p.Name == pair.Value);
+                        var prop = CacheUtil.GetTypeProperties(pair.Key).FirstOrDefault(p => p.Name == pair.Value);
                         var val = prop?.GetValueGetter()?.Invoke(context.Result);
                         if (val != null)
                         {
-                            _logger.LogDebug($"ParamsProtector is protecting {GetType().FullName}.{pair.Key.FullName} Value");
+                            _logger.LogDebug($"ParamsProtector is protecting {pair.Key.FullName} Value");
 
                             var obj = JToken.FromObject(val);
                             ParamsProtectionHelper.ProtectParams(obj, _protector, _option);
