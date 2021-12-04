@@ -4,6 +4,8 @@
 
 asp.net core data protection extensions
 
+> Moved to <https://github.com/WeihanLi/WeihanLi.Web.Extensions/tree/dev/src/WeihanLi.Web.Extensions/DataProtection>, use `WeihanLi.Web.Extensions` instead
+
 ## Install
 
 install the package `WeihanLi.DataProtection`
